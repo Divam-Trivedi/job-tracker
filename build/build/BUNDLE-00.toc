@@ -1,4 +1,0 @@
-([('Job Tracker',
-   '/Users/tvidk/Documents/Miscellaneous/env/Gmail_Job_Fetcher/job_tracker/dist/Job '
-   'Tracker',
-   'EXECUTABLE')],)

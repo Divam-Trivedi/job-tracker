@@ -1,1 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Build artifacts
+build/
+dist/
+
+# PyInstaller
+*.spec.bak
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Gmail OAuth
 credentials.json
+token.json
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
