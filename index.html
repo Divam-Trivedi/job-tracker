@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Tracker</title>
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+/* ── Theme ── */
+:root {
+--bg:         #ffffff;
+--bg2:        #f7f7f7;
+--bg3:        #efefef;
+--border:     #e0e0e0;
+--border2:    #cacaca;
+--text:       #111111;
+--text2:      #555555;
+--text3:      #999999;
+--focus:      #111111;
+--radius:     6px;
+--font:       'Inter', system-ui, -apple-system, sans-serif;
+--mono:       'JetBrains Mono', 'Fira Code', monospace;
+}
+@media (prefers-color-scheme: dark) {
+:root:not([data-theme="light"]) {
+--bg: #111111; --bg2: #1a1a1a; --bg3: #222222;
+--border: #2a2a2a; --border2: #383838;
+--text: #f0f0f0; --text2: #aaaaaa; --text3: #555555;
+--focus: #f0f0f0;
+  }
+}
+[data-theme="dark"] {
+--bg: #111111; --bg2: #1a1a1a; --bg3: #222222;
+--border: #2a2a2a; --border2: #383838;
+--text: #f0f0f0; --text2: #aaaaaa; --text3: #555555;
+--focus: #f0f0f0;
+}
+[data-theme="light"] {
+--bg: #ffffff; --bg2: #f7f7f7; --bg3: #efefef;
+--border: #e0e0e0; --border2: #cacaca;
+--text: #111111; --text2: #555555; --text3: #999999;
+--focus: #111111;
+}
+body {
+font-family: var(--font);
+background: var(--bg);
+color: var(--text);
+line-height: 1.5;
+min-height: 100vh;
+}
+/* ── Layout ── */
+.page { display: none; flex-direction: column; min-height: 100vh; }
+.page.active { display: flex; }
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px; width: 100%; }
+/* ── Header ── */
+header {
+border-bottom: 1px solid var(--border);
+padding: 0;
+}
+.header-inner {
+display: flex;
+align-items: center;
+justify-content: space-between;
+height: 52px;
+gap: 16px;
+}
+.wordmark {
+font-size: 14px;
+font-weight: 600;
+letter-spacing: -0.2px;
+color: var(--text);
+text-decoration: none;
+}
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.wordmark span {
+color: inherit;
+}
+.gmail-email {
+font-size: 12px;
+color: var(--text3);
+cursor: pointer;
+border-bottom: 1px dotted var(--border2);
+padding: 0 2px;
+}
+.gmail-email:hover {
+color: var(--text2);
+border-bottom: 1px dotted var(--text2);
+}
+/* ── Buttons ── */
+.btn {
+display: inline-flex; align-items: center; gap: 6px;
+font-family: var(--font); font-size: 13px; font-weight: 500;
+padding: 6px 12px;
+border-radius: var(--radius);
+border: 1px solid var(--border2);
+background: var(--bg);
+color: var(--text2);
+cursor: pointer;
+transition: color .15s, background .15s, border-color .15s;
+white-space: nowrap;
+text-decoration: none;
+}
+.btn:hover { color: var(--text); border-color: var(--text3); }
+.btn.primary {
+background: var(--text);
+color: var(--bg);
+border-color: var(--text);
+}
+.btn.primary:hover { opacity: .85; }
+.btn.danger { color: #cc3333; border-color: #cc3333; }
+.btn.danger:hover { background: #cc3333; color: #fff; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn svg { flex-shrink: 0; }
+.icon-btn {
+display: inline-flex; align-items: center; justify-content: center;
+width: 30px; height: 30px;
+background: transparent; border: none;
+color: var(--text3); cursor: pointer; border-radius: var(--radius);
+transition: color .15s, background .15s;
+}
+.icon-btn:hover { color: var(--text); background: var(--bg3); }
+/* ── Main content ── */
+main { flex: 1; padding: 32px 0; }
+/* ── Toolbar ── */
+.toolbar {
+display: flex; align-items: center; gap: 10px;
+margin-bottom: 20px; flex-wrap: wrap;
+}
+.search-wrap { position: relative; flex: 1; min-width: 180px; }
+.search-wrap svg {
+position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+color: var(--text3); pointer-events: none;
+}
+input[type="text"], input[type="date"], input[type="number"],
+input[type="password"], select, textarea {
+font-family: var(--font); font-size: 13px;
+background: var(--bg); color: var(--text);
+border: 1px solid var(--border2); border-radius: var(--radius);
+outline: none; transition: border-color .15s;
+}
+input[type="text"]:focus, input[type="date"]:focus,
+input[type="number"]:focus, input[type="password"]:focus,
+select:focus, textarea:focus { border-color: var(--focus); }
+.search-input {
+width: 100%; padding: 7px 10px 7px 32px;
+}
+.filter-select { padding: 7px 10px; }
+/* ── Status badges ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  min-width: 90px; /* Ensures all badges are the same width */
+  text-align: center;
+}
+
+.status-badge.applied {
+  background: #E8F0FE;
+  color: #1E40AF;
+}
+
+.status-badge.under-review {
+  background: #FEF3E8;
+  color: #92400E;
+}
+
+.status-badge.interview {
+  background: #F0E8FE;
+  color: #5B21B6;
+}
+
+.status-badge.offered {
+  background: #E8FEF0;
+  color: #15803D;
+}
+
+.status-badge.rejected {
+  background: #FEE8E8;
+  color: #991B1B;
+}
+
+.status-badge.other {
+  background: #F0F0F0;
+  color: #525252;
+}
+
+/* Dark theme adjustments - Muted & Coherent */
+[data-theme="dark"] .status-badge.applied {
+  background: #1e293b; /* Muted Slate Blue */
+  color: #93c5fd;       /* Soft Light Blue */
+}
+
+[data-theme="dark"] .status-badge.under-review {
+  background: #2d261e; /* Muted Warm Grey/Brown */
+  color: #fcd34d;       /* Soft Amber */
+}
+
+[data-theme="dark"] .status-badge.interview {
+  background: #2e1a47; /* Muted Deep Purple */
+  color: #c4b5fd;       /* Soft Lavender */
+}
+
+[data-theme="dark"] .status-badge.offered {
+  background: #142d21; /* Muted Deep Green */
+  color: #86efac;       /* Soft Mint */
+}
+
+[data-theme="dark"] .status-badge.rejected {
+  background: #311b1b; /* Muted Deep Red */
+  color: #fca5a5;       /* Soft Rose */
+}
+
+[data-theme="dark"] .status-badge.other {
+  background: #262626; /* Neutral Dark Grey */
+  color: #a3a3a3;       /* Neutral Grey */
+}
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+text-align: left; padding: 9px 12px;
+font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+color: var(--text3); border-bottom: 1px solid var(--border);
+white-space: nowrap; cursor: pointer; user-select: none;
+}
+th:hover { color: var(--text2); }
+th.sorted { color: var(--text); }
+td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg2); }
+.td-company { font-weight: 500; }
+.td-role { color: var(--text2); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.td-date { font-family: var(--mono); font-size: 12px; color: var(--text3); white-space: nowrap; }
+.td-actions { white-space: nowrap; text-align: right; }
+.row-action {
+display: inline-flex; align-items: center;
+background: transparent; border: none; cursor: pointer;
+font-size: 12px; color: var(--text3); padding: 2px 6px;
+border-radius: 4px; transition: color .15s, background .15s;
+}
+.row-action:hover { color: var(--text); background: var(--bg3); }
+.row-action.del:hover { color: #cc3333; background: transparent; }
+/* ── Empty / loading ── */
+.empty { padding: 60px 0; text-align: center; color: var(--text3); font-size: 13px; }
+/* ── Progress bar ── */
+.progress-wrap {
+border: 1px solid var(--border);
+border-radius: var(--radius);
+padding: 20px 24px;
+background: var(--bg2);
+margin-bottom: 20px;
+display: none;
+}
+.progress-wrap.visible { display: block; }
+.progress-label {
+display: flex; justify-content: space-between; align-items: baseline;
+margin-bottom: 10px; font-size: 13px;
+}
+.progress-label-text { color: var(--text2); }
+.progress-count { font-family: var(--mono); font-size: 12px; color: var(--text3); }
+.progress-bar-track {
+height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden;
+}
+.progress-bar-fill {
+height: 100%; background: var(--text); border-radius: 2px;
+transition: width .3s ease; width: 0%;
+}
+.progress-meta {
+display: flex; justify-content: space-between; align-items: center;
+margin-top: 12px;
+}
+.progress-summary { font-size: 12px; color: var(--text3); }
+/* ── Modal ── */
+.modal-backdrop {
+position: fixed; inset: 0;
+background: rgba(0,0,0,.45);
+display: none; align-items: center; justify-content: center;
+z-index: 100; padding: 16px;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+background: var(--bg); border: 1px solid var(--border2);
+border-radius: 8px; padding: 28px;
+width: 100%; max-width: 420px;
+box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+.modal-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+/* ── Form fields ── */
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; }
+.field input, .field select { width: 100%; padding: 8px 10px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* ── Setup page ── */
+.setup-section { margin-bottom: 40px; }
+.setup-section-title {
+font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase;
+color: var(--text3); margin-bottom: 16px; padding-bottom: 10px;
+border-bottom: 1px solid var(--border);
+}
+.setup-card {
+border: 1px solid var(--border); border-radius: var(--radius);
+padding: 20px; background: var(--bg2);
+}
+.setup-card + .setup-card { margin-top: 10px; }
+/* ── Toggle group ── */
+.toggle-group { display: flex; gap: 0; margin-bottom: 16px; }
+.toggle-group button {
+flex: 1; padding: 8px; font-size: 13px; font-weight: 500;
+background: var(--bg3); border: 1px solid var(--border2);
+color: var(--text3); cursor: pointer; transition: all .15s;
+font-family: var(--font);
+}
+.toggle-group button:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.toggle-group button:last-child  { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
+.toggle-group button.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+/* ── Radio group ── */
+.radio-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.radio-label {
+display: flex; align-items: center; gap: 10px;
+font-size: 13px; cursor: pointer; color: var(--text2);
+}
+.radio-label input { accent-color: var(--text); }
+.radio-label span { color: var(--text); }
+/* ── Connection status ── */
+.conn-status {
+font-size: 12px; padding: 6px 10px; border-radius: 4px;
+display: none; margin-top: 10px;
+}
+.conn-status.ok  { background: var(--bg3); color: var(--text2); display: block; }
+.conn-status.err { background: #fff0f0; color: #cc3333; display: block; border: 1px solid #ffcccc; }
+[data-theme="dark"] .conn-status.err { background: #2a1111; border-color: #5c2222; }
+/* ── Checkpoint info ── */
+.checkpoint-note {
+font-size: 12px; color: var(--text3); font-family: var(--mono);
+margin-top: 6px;
+}
+/* ── Theme toggle ── */
+.theme-toggle { font-size: 16px; }
+/* ── Responsive ── */
+@media (max-width: 600px) {
+th:nth-child(4), td:nth-child(4),
+th:nth-child(5), td:nth-child(5) { display: none; }
+.field-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<!-- ══════════════════════════════════════════════════════
+     PAGE 1 — JOBS
+══════════════════════════════════════════════════════ -->
+<div class="page active" id="page-jobs">
+<header>
+<div class="container">
+<div class="header-inner">
+<span class="wordmark">
+          Job Tracker for
+<span id="nameContainer">
+<span id="userName" class="gmail-email">loading…</span>
+</span>
+</span>
+<div class="header-actions">
+<button class="icon-btn theme-toggle" id="themeToggle" title="Toggle theme" onclick="toggleTheme()">◐</button>
+<button class="btn" onclick="showPage('setup')">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            Setup
+</button>
+</div>
+</div>
+</div>
+</header>
+<main>
+<div class="container">
+<!-- Progress bar (shown during run) -->
+<div class="progress-wrap" id="progressWrap">
+<div class="progress-label">
+<span class="progress-label-text" id="progressLabel">Processing emails…</span>
+<span class="progress-count" id="progressCount"></span>
+</div>
+<div class="progress-bar-track">
+<div class="progress-bar-fill" id="progressBar"></div>
+</div>
+<div class="progress-meta">
+<span class="progress-summary" id="progressSummary"></span>
+<button class="btn danger" onclick="stopRun()">Stop</button>
+</div>
+</div>
+<!-- Toolbar -->
+<div class="toolbar">
+<div class="search-wrap">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+<input type="text" class="search-input" id="searchInput" placeholder="Search…" oninput="renderTable()">
+</div>
+<select class="filter-select" id="statusFilter" onchange="renderTable()">
+<option value="">All statuses</option>
+<option>Applied</option>
+<option>Under Review</option>
+<option>Interview</option>
+<option>Offered</option>
+<option>Rejected</option>
+<option>Other</option>
+</select>
+<button class="btn primary" onclick="openAddModal()">+ Add</button>
+</div>
+<!-- Table -->
+<div class="table-wrap">
+<table id="jobsTable">
+<thead>
+<tr>
+<th onclick="setSort('company')">Company <span id="sort-company"></span></th>
+<th onclick="setSort('role')">Role <span id="sort-role"></span></th>
+<th onclick="setSort('status')">Status <span id="sort-status"></span></th>
+<th onclick="setSort('applied_date')">Applied <span id="sort-applied_date"></span></th>
+<th onclick="setSort('last_updated')">Updated <span id="sort-last_updated"></span></th>
+<th></th>
+</tr>
+</thead>
+<tbody id="jobsBody">
+<tr><td colspan="6" class="empty">Loading…</td></tr>
+</tbody>
+</table>
+</div>
+<div style="margin-top:12px; font-size:12px; color:var(--text3);" id="tableFooter"></div>
+</div>
+</main>
+</div><!-- /page-jobs -->
+<!-- ══════════════════════════════════════════════════════
+     PAGE 2 — SETUP
+══════════════════════════════════════════════════════ -->
+<div class="page" id="page-setup">
+<header>
+<div class="container">
+<div class="header-inner">
+<button class="btn" onclick="showPage('jobs')">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Jobs
+</button>
+<div class="header-actions">
+<button class="icon-btn theme-toggle" title="Toggle theme" onclick="toggleTheme()">◐</button>
+</div>
+</div>
+</div>
+</header>
+<main>
+<div class="container">
+<!-- ── Gmail ── -->
+<div class="setup-section">
+<div class="setup-section-title">Gmail Account</div>
+<div class="setup-card">
+<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">
+            Authenticated as: <strong id="setupGmailEmail">loading…</strong>
+</p>
+<button class="btn" onclick="gmailReconnect()">Switch Account</button>
+</div>
+</div>
+<!-- ── Model ── -->
+<div class="setup-section">
+<div class="setup-section-title">Model</div>
+<div class="setup-card">
+<div class="toggle-group">
+<button id="btn-local" class="active" onclick="setProvider('ollama')">Local (Ollama)</button>
+<button id="btn-openai" onclick="setProvider('openai')">OpenAI</button>
+<button id="btn-gemini" onclick="setProvider('gemini')">Gemini</button>
+<button id="btn-anthropic" onclick="setProvider('anthropic')">Anthropic</button>
+</div>
+<!-- Local fields -->
+<div id="fields-local">
+<div class="field-row">
+<div class="field">
+<label>Ollama Endpoint</label>
+<input type="text" id="cfg-endpoint" placeholder="http://localhost:11434/api/generate">
+</div>
+<div class="field">
+<label>Model Name</label>
+<input type="text" id="cfg-model-local" placeholder="mistral:latest">
+</div>
+</div>
+</div>
+<!-- API fields -->
+<div id="fields-api" style="display:none;">
+<div class="field-row">
+<div class="field">
+<label>API Key</label>
+<div style="position:relative;">
+<input type="password" id="cfg-apikey" placeholder="sk-…" style="width:100%;padding:8px 36px 8px 10px;">
+<button onclick="toggleKeyVis()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;" id="keyVisBtn">Show</button>
+</div>
+</div>
+<div class="field">
+<label>Model Name</label>
+<input type="text" id="cfg-model-api" placeholder="gpt-4o-mini">
+</div>
+</div>
+</div>
+<div class="conn-status" id="connStatus"></div>
+<div style="display:flex;gap:8px;margin-top:14px;">
+<button class="btn" onclick="testConnection()" id="testBtn">Test Connection</button>
+<button class="btn primary" onclick="saveConfig()">Save</button>
+</div>
+</div>
+</div>
+<!-- ── Run ── -->
+<div class="setup-section">
+<div class="setup-section-title">Run</div>
+<div class="setup-card" id="runCard">
+<div class="radio-group">
+<label class="radio-label">
+<input type="radio" name="runMode" value="checkpoint" checked onchange="updateRunMode()">
+<span>Resume from last checkpoint</span>
+</label>
+<div class="checkpoint-note" id="checkpointNote">Loading…</div>
+<label class="radio-label" style="margin-top:6px;">
+<input type="radio" name="runMode" value="hours" onchange="updateRunMode()">
+<span>Last</span>
+<input type="number" id="hoursInput" min="1" max="8760" value="36"
+style="width:64px;padding:4px 6px;margin:0 4px;" onclick="document.querySelector('[value=hours]').checked=true;updateRunMode()">
+<span>hours</span>
+</label>
+<label class="radio-label" style="margin-top:4px;">
+<input type="radio" name="runMode" value="date" onchange="updateRunMode()">
+<span>From date</span>
+<input type="date" id="sinceDate" style="padding:4px 6px;margin-left:8px;"
+onclick="document.querySelector('[value=date]').checked=true;updateRunMode()">
+</label>
+</div>
+<button class="btn primary" id="runBtn" onclick="startRun()">Run Now</button>
+</div>
+<!-- Run progress (shown in setup page too when initiated from here) -->
+<div class="progress-wrap" id="setupProgressWrap" style="margin-top:12px;">
+<div class="progress-label">
+<span class="progress-label-text" id="setupProgressLabel">Processing emails…</span>
+<span class="progress-count" id="setupProgressCount"></span>
+</div>
+<div class="progress-bar-track">
+<div class="progress-bar-fill" id="setupProgressBar"></div>
+</div>
+<div class="progress-meta">
+<span class="progress-summary" id="setupProgressSummary"></span>
+<button class="btn danger" onclick="stopRun()">Stop</button>
+</div>
+</div>
+</div>
+<!-- ── Danger Zone ── -->
+<div class="setup-section">
+<div class="setup-section-title">Danger Zone</div>
+<div class="setup-card">
+<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">
+            Delete all job records permanently.
+</p>
+<button class="btn danger" onclick="openDeleteAllModal()">Delete All Jobs</button>
+</div>
+</div>
+</div>
+</main>
+</div><!-- /page-setup -->
+<!-- ══════════════════════════════════════════════════════
+     MODAL — Add / Edit Job
+══════════════════════════════════════════════════════ -->
+<div class="modal-backdrop" id="jobModal" onclick="closeModal(event)">
+<div class="modal">
+<div class="modal-title" id="modalTitle">Add Job</div>
+<div class="field-row">
+<div class="field">
+<label>Company</label>
+<input type="text" id="m-company" placeholder="Acme Corp">
+</div>
+<div class="field">
+<label>Role</label>
+<input type="text" id="m-role" placeholder="Software Engineer">
+</div>
+</div>
+<div class="field-row">
+<div class="field">
+<label>Status</label>
+<select id="m-status">
+<option>Applied</option>
+<option>Under Review</option>
+<option>Interview</option>
+<option>Offered</option>
+<option>Rejected</option>
+<option>Other</option>
+</select>
+</div>
+<div class="field">
+<label>Applied Date</label>
+<input type="date" id="m-date">
+</div>
+</div>
+<div class="modal-footer">
+<button class="btn" onclick="closeModal()">Cancel</button>
+<button class="btn primary" onclick="saveJob()">Save</button>
+</div>
+</div>
+</div>
+<!-- Delete confirm -->
+<div class="modal-backdrop" id="deleteModal" onclick="closeDeleteModal(event)">
+<div class="modal" style="max-width:340px;">
+<div class="modal-title">Remove this job?</div>
+<p style="font-size:13px;color:var(--text2);margin-bottom:4px;" id="deleteDesc"></p>
+<div class="modal-footer">
+<button class="btn" onclick="closeDeleteModal()">Cancel</button>
+<button class="btn danger" onclick="confirmDelete()">Remove</button>
+</div>
+</div>
+</div>
+<!-- Delete all confirm -->
+<div class="modal-backdrop" id="deleteAllModal" onclick="closeDeleteAllModal(event)">
+<div class="modal" style="max-width:340px;">
+<div class="modal-title">Delete ALL jobs?</div>
+<p style="font-size:13px;color:var(--text2);margin-bottom:4px;">This cannot be undone. All job records will be permanently removed.</p>
+<div class="modal-footer">
+<button class="btn" onclick="closeDeleteAllModal()">Cancel</button>
+<button class="btn danger" onclick="confirmDeleteAll()">Delete All</button>
+</div>
+</div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════════════
+let jobs       = [];
+let sortKey    = 'applied_date';
+let sortDir    = -1;          // -1 = desc
+let editingId  = null;        // null = add, number = edit
+let deleteId   = null;
+let provider   = 'ollama';
+let pollTimer  = null;
+// ═══════════════════════════════════════════════════════════
+// Theme
+// ═══════════════════════════════════════════════════════════
+function initTheme() {
+const saved = localStorage.getItem('theme');
+if (saved) document.documentElement.setAttribute('data-theme', saved);
+}
+function toggleTheme() {
+const cur = document.documentElement.getAttribute('data-theme');
+const sys = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+const next = (cur === 'dark' || (!cur && sys === 'dark')) ? 'light' : 'dark';
+document.documentElement.setAttribute('data-theme', next);
+localStorage.setItem('theme', next);
+}
+initTheme();
+// ═══════════════════════════════════════════════════════
+// CSRF Token
+// ═══════════════════════════════════════════════════════
+let csrfToken = '';
+async function initCSRF() {
+try {
+const r = await fetchWithCSRF('/api/csrf-token');
+const d = await r.json();
+csrfToken = d.csrf_token;
+  } catch(e) {
+console.error('CSRF init failed:', e);
+  }
+}
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', initCSRF);
+// Helper for unsafe requests
+async function fetchWithCSRF(url, options = {}) {
+const method = options.method || 'GET';
+if (method !== 'GET') {
+options.headers = options.headers || {};
+options.headers['X-CSRF-Token'] = csrfToken;
+  }
+return fetch(url, options);
+}
+// ═══════════════════════════════════════════════════════════
+// Gmail User
+// ═══════════════════════════════════════════════════════════
+async function loadGmailUser() {
+try {
+const r = await fetchWithCSRF('/api/gmail-user');
+const d = await r.json();
+if (d.ok && d.email) {
+// Store globally for renderUserName to use
+window.userEmail = d.email;
+renderUserName();
+const setupEl = document.getElementById('setupGmailEmail');
+if (setupEl) setupEl.textContent = d.email;
+    } else {
+window.userEmail = 'not authenticated';
+renderUserName();
+const setupEl = document.getElementById('setupGmailEmail');
+if (setupEl) setupEl.textContent = 'not authenticated';
+    }
+  } catch(e) {
+window.userEmail = 'error';
+renderUserName();
+  }
+}
+async function gmailReconnect() {
+const confirmed = confirm('This will clear your Gmail authentication. You\'ll need to log in again on the next run. Continue?');
+if (!confirmed) return;
+try {
+const r = await fetchWithCSRF('/api/gmail-reconnect', { method: 'POST' });
+const d = await r.json();
+if (d.ok) {
+alert('Gmail token cleared. Please refresh the page.');
+// Don't call loadGmailUser() here—it will still see the old cached state
+// Force a full page reload instead
+window.location.reload();
+    } else {
+alert('Error: ' + (d.error || 'unknown'));
+    }
+  } catch(e) {
+alert('Request failed: ' + e.message);
+  }
+}
+// ═══════════════════════════════════════════════════════════
+// Page routing
+// ═══════════════════════════════════════════════════════════
+function showPage(name) {
+document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+document.getElementById('page-' + name).classList.add('active');
+if (name === 'setup') { loadConfig(); loadCheckpoint(); loadGmailUser(); }
+if (name === 'jobs')  { loadJobs(); }
+}
+// ═══════════════════════════════════════════════════════════
+// Jobs — load & render
+// ═══════════════════════════════════════════════════════════
+async function loadJobs() {
+try {
+const r = await fetchWithCSRF('/api/jobs');
+jobs = await r.json();
+renderTable();
+  } catch(e) {
+document.getElementById('jobsBody').innerHTML =
+`<tr><td colspan="6" class="empty">Could not load jobs. Is the server running?</td></tr>`;
+  }
+}
+function setSort(key) {
+if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = -1; }
+  ['company','role','status','applied_date','last_updated'].forEach(k => {
+document.getElementById('sort-' + k).textContent = '';
+  });
+document.getElementById('sort-' + key).textContent = sortDir === 1 ? ' ↑' : ' ↓';
+renderTable();
+}
+function renderTable() {
+const q      = (document.getElementById('searchInput').value || '').toLowerCase();
+const filter = document.getElementById('statusFilter').value;
+let rows = jobs.filter(j => {
+const ms = !filter || j.status === filter;
+const mq = !q || j.company.toLowerCase().includes(q) || j.role.toLowerCase().includes(q);
+return ms && mq;
+  });
+rows.sort((a, b) => {
+let va = a[sortKey] || '', vb = b[sortKey] || '';
+return va < vb ? sortDir : va > vb ? -sortDir : 0;
+  });
+const tbody = document.getElementById('jobsBody');
+if (!rows.length) {
+tbody.innerHTML = `<tr><td colspan="6" class="empty">${jobs.length ? 'No matches.' : 'No jobs yet. Add one or run the pipeline.'}</td></tr>`;
+document.getElementById('tableFooter').textContent = '';
+return;
+  }
+tbody.innerHTML = rows.map(j => `
+    <tr>
+      <td class="td-company">${esc(j.company)}</td>
+      <td class="td-role" title="${esc(j.role)}">${esc(j.role)}</td>
+      <td><span class="status-badge ${getStatusClass(j.status)}">${esc(j.status)}</span></td>
+      <td class="td-date">${fmtDate(j.applied_date)}</td>
+      <td class="td-date">${fmtRelative(j.last_updated)}</td>
+      <td class="td-actions">
+        <button class="row-action" onclick="openEditModal(${j.id})">Edit</button>
+        <button class="row-action del" onclick="openDeleteModal(${j.id}, '${esc(j.company)}', '${esc(j.role)}')">✕</button>
+      </td>
+    </tr>
+  `).join('');
+document.getElementById('tableFooter').textContent =
+`${rows.length} of ${jobs.length} application${jobs.length !== 1 ? 's' : ''}`;
+}
+// ═══════════════════════════════════════════════════════════
+// Helper: Status class mapping
+// ═══════════════════════════════════════════════════════════
+function getStatusClass(status) {
+const map = {
+'Applied': 'applied',
+'Under Review': 'under-review',
+'Interview': 'interview',
+'Offered': 'offered',
+'Rejected': 'rejected',
+'Other': 'other'
+  };
+return map[status] || 'other';
+}
+// ═══════════════════════════════════════════════════════════
+// Modal — Add / Edit
+// ═══════════════════════════════════════════════════════════
+function openAddModal() {
+editingId = null;
+document.getElementById('modalTitle').textContent = 'Add Job';
+document.getElementById('m-company').value = '';
+document.getElementById('m-role').value    = '';
+document.getElementById('m-status').value  = 'Applied';
+document.getElementById('m-date').value    = new Date().toISOString().slice(0,10);
+document.getElementById('jobModal').classList.add('open');
+document.getElementById('m-company').focus();
+}
+function openEditModal(id) {
+const job = jobs.find(j => j.id === id);
+if (!job) return;
+editingId = id;
+document.getElementById('modalTitle').textContent = 'Edit Job';
+document.getElementById('m-company').value = job.company;
+document.getElementById('m-role').value    = job.role;
+document.getElementById('m-status').value  = job.status;
+document.getElementById('m-date').value    = job.applied_date;
+document.getElementById('jobModal').classList.add('open');
+}
+function closeModal(e) {
+if (e && e.target !== document.getElementById('jobModal')) return;
+document.getElementById('jobModal').classList.remove('open');
+}
+async function saveJob() {
+const body = {
+company:      document.getElementById('m-company').value.trim(),
+role:         document.getElementById('m-role').value.trim(),
+status:       document.getElementById('m-status').value,
+applied_date: document.getElementById('m-date').value,
+  };
+if (!body.company || !body.role) { alert('Company and role are required.'); return; }
+const url    = editingId ? `/api/jobs/${editingId}` : '/api/jobs';
+const method = editingId ? 'PUT' : 'POST';
+const r = await fetchWithCSRF(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+if (!r.ok) { alert('Save failed.'); return; }
+document.getElementById('jobModal').classList.remove('open');
+loadJobs();
+}
+// ═══════════════════════════════════════════════════════════
+// Modal — Delete one
+// ═══════════════════════════════════════════════════════════
+function openDeleteModal(id, company, role) {
+deleteId = id;
+document.getElementById('deleteDesc').textContent = `${company} — ${role}`;
+document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal(e) {
+if (e && e.target !== document.getElementById('deleteModal')) return;
+document.getElementById('deleteModal').classList.remove('open');
+}
+async function confirmDelete() {
+if (!deleteId) return;
+await fetchWithCSRF(`/api/jobs/${deleteId}`, { method: 'DELETE' });
+document.getElementById('deleteModal').classList.remove('open');
+deleteId = null;
+loadJobs();
+}
+// ═══════════════════════════════════════════════════════════
+// Modal — Delete all
+// ═══════════════════════════════════════════════════════════
+function openDeleteAllModal() {
+document.getElementById('deleteAllModal').classList.add('open');
+}
+function closeDeleteAllModal(e) {
+if (e && e.target !== document.getElementById('deleteAllModal')) return;
+document.getElementById('deleteAllModal').classList.remove('open');
+}
+async function confirmDeleteAll() {
+try {
+const r = await fetchWithCSRF('/api/jobs', { method: 'DELETE' });
+if (!r.ok) {
+alert('Delete failed.');
+return;
+    }
+document.getElementById('deleteAllModal').classList.remove('open');
+loadJobs();
+  } catch(e) {
+alert('Error: ' + e.message);
+  }
+}
+// ═══════════════════════════════════════════════════════════
+// Config
+// ═══════════════════════════════════════════════════════════
+async function loadConfig() {
+try {
+const r   = await fetchWithCSRF('/api/config');
+const cfg = await r.json();
+provider  = cfg.provider || 'ollama';
+setProvider(provider, false);
+document.getElementById('cfg-endpoint').value   = cfg.ollama_endpoint || '';
+document.getElementById('cfg-model-local').value= provider === 'ollama' ? (cfg.model || '') : '';
+document.getElementById('cfg-model-api').value  = provider !== 'ollama' ? (cfg.model || '') : '';
+document.getElementById('cfg-apikey').value     = cfg.api_key || '';
+  } catch(e) {}
+}
+function setProvider(p, resetFields) {
+provider = p;
+  ['ollama','openai','gemini','anthropic'].forEach(x => {
+const map = { ollama: 'local', openai: 'openai', gemini: 'gemini', anthropic: 'anthropic' };
+document.getElementById('btn-' + (x === 'ollama' ? 'local' : x)).classList.toggle('active', x === p);
+  });
+document.getElementById('fields-local').style.display = p === 'ollama' ? '' : 'none';
+document.getElementById('fields-api').style.display   = p !== 'ollama' ? '' : 'none';
+document.getElementById('connStatus').className = 'conn-status';
+}
+function toggleKeyVis() {
+const inp = document.getElementById('cfg-apikey');
+const btn = document.getElementById('keyVisBtn');
+inp.type = inp.type === 'password' ? 'text' : 'password';
+btn.textContent = inp.type === 'password' ? 'Show' : 'Hide';
+}
+async function saveConfig() {
+const model = provider === 'ollama'
+? document.getElementById('cfg-model-local').value.trim()
+: document.getElementById('cfg-model-api').value.trim();
+const body = {
+provider,
+model,
+ollama_endpoint: document.getElementById('cfg-endpoint').value.trim(),
+api_key:         document.getElementById('cfg-apikey').value,
+  };
+const r = await fetchWithCSRF('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+if (r.ok) {
+const s = document.getElementById('connStatus');
+s.className = 'conn-status ok';
+s.textContent = 'Saved.';
+setTimeout(() => s.className = 'conn-status', 2000);
+  }
+}
+async function testConnection() {
+const btn = document.getElementById('testBtn');
+const s   = document.getElementById('connStatus');
+btn.disabled = true;
+btn.textContent = 'Testing…';
+s.className = 'conn-status';
+const model = provider === 'ollama'
+? document.getElementById('cfg-model-local').value.trim()
+: document.getElementById('cfg-model-api').value.trim();
+const body = {
+provider,
+model,
+ollama_endpoint: document.getElementById('cfg-endpoint').value.trim(),
+api_key:         document.getElementById('cfg-apikey').value,
+  };
+try {
+const r    = await fetchWithCSRF('/api/test-connection', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+const data = await r.json();
+s.className   = data.ok ? 'conn-status ok' : 'conn-status err';
+s.textContent = data.message;
+  } catch(e) {
+s.className   = 'conn-status err';
+s.textContent = 'Request failed: ' + e.message;
+  }
+btn.disabled    = false;
+btn.textContent = 'Test Connection';
+}
+// ═══════════════════════════════════════════════════════════
+// Checkpoint
+// ═══════════════════════════════════════════════════════════
+async function loadCheckpoint() {
+try {
+const r  = await fetchWithCSRF('/api/checkpoint');
+const d  = await r.json();
+const el = document.getElementById('checkpointNote');
+if (d.checkpoint) {
+el.textContent = 'Last run: ' + new Date(d.checkpoint).toLocaleString();
+    } else {
+el.textContent = 'No checkpoint saved yet.';
+    }
+  } catch(e) {}
+}
+function updateRunMode() { /* nothing extra needed — radios handle state */ }
+// ═══════════════════════════════════════════════════════════
+// Run / Stop
+// ═══════════════════════════════════════════════════════════
+async function startRun() {
+const mode = document.querySelector('[name=runMode]:checked').value;
+const body = { mode };
+if (mode === 'hours') {
+body.hours = parseInt(document.getElementById('hoursInput').value) || 36;
+  } else if (mode === 'date') {
+body.since_date = document.getElementById('sinceDate').value;
+if (!body.since_date) { alert('Please select a date.'); return; }
+  }
+const r = await fetchWithCSRF('/api/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+if (!r.ok) {
+const d = await r.json();
+alert(d.error || 'Could not start run.');
+return;
+  }
+showProgressUI(true);
+pollProgress();
+}
+async function stopRun() {
+await fetchWithCSRF('/api/stop', { method: 'POST' });
+}
+function showProgressUI(visible) {
+const onJobsPage  = document.getElementById('page-jobs').classList.contains('active');
+const wrapJobs    = document.getElementById('progressWrap');
+const wrapSetup   = document.getElementById('setupProgressWrap');
+const runCard     = document.getElementById('runCard');
+const runBtn      = document.getElementById('runBtn');
+if (visible) {
+wrapJobs.classList.add('visible');
+wrapSetup.classList.add('visible');
+if (runBtn) runBtn.disabled = true;
+  } else {
+wrapJobs.classList.remove('visible');
+wrapSetup.classList.remove('visible');
+if (runBtn) runBtn.disabled = false;
+  }
+}
+function updateProgressUI(data) {
+const done    = data.done    || 0;
+const total   = data.total   || 0;
+const pct     = total > 0 ? Math.round((done / total) * 100) : (data.status === 'done' ? 100 : 0);
+const label   = data.status === 'done'     ? 'Complete'
+: data.status === 'cancelled' ? 'Cancelled'
+: data.status === 'error'     ? 'Error'
+: 'Processing emails…';
+const count   = total > 0 ? `${done} / ${total}` : '';
+const counts  = data.counts || {};
+const summary = data.status === 'done' || data.status === 'cancelled'
+? `${counts.created||0} new · ${counts.updated||0} updated · ${counts.skipped||0} skipped`
+: `${counts.created||0} new · ${counts.updated||0} updated so far`;
+for (const sfx of ['', 'setup']) {
+const pre = sfx ? sfx + 'P' : 'p';
+const el = n => document.getElementById(pre + 'rogressLabel') || document.getElementById(sfx ? 'setup' + 'ProgressLabel' : 'progressLabel');
+const setEl = (id, val) => { const e = document.getElementById(sfx ? 'setup' + id : id); if(e) e[typeof val === 'string' ? 'textContent' : 'style'] = val; };
+  }
+// Update both sets of elements
+  ['progressLabel','setupProgressLabel'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = label; });
+  ['progressCount','setupProgressCount'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = count; });
+  ['progressBar','setupProgressBar'].forEach(id => { const e = document.getElementById(id); if(e) e.style.width = pct + '%'; });
+  ['progressSummary','setupProgressSummary'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = summary; });
+}
+function pollProgress() {
+clearInterval(pollTimer);
+pollTimer = setInterval(async () => {
+try {
+const r    = await fetchWithCSRF('/api/progress');
+const data = await r.json();
+updateProgressUI(data);
+if (!data.running) {
+clearInterval(pollTimer);
+setTimeout(() => {
+showProgressUI(false);
+loadJobs();
+loadCheckpoint();
+        }, 2500);
+      }
+    } catch(e) {
+clearInterval(pollTimer);
+showProgressUI(false);
+    }
+  }, 600);
+}
+// Check if a run is already happening when the page loads
+(async () => {
+try {
+const r    = await fetchWithCSRF('/api/progress');
+const data = await r.json();
+if (data.running) { showProgressUI(true); updateProgressUI(data); pollProgress(); }
+  } catch(e) {}
+})();
+// ═══════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════
+function esc(s) {
+return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+// FIX: Parse YYYY-MM-DD as a local date, not UTC
+function fmtDate(s) {
+if (!s) return '—';
+// Split the date string YYYY-MM-DD and construct a local Date object.
+// new Date('2024-06-09') treats it as UTC midnight, which shifts the date
+// back one day in EDT. Instead, parse the components and create a local date.
+const [year, month, day] = s.split('-');
+if (!year || !month || !day) return s;
+const d = new Date(parseInt(year), parseInt(month)-1, parseInt(day));
+if (isNaN(d)) return s;
+return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+function fmtRelative(s) {
+if (!s) return '—';
+const d    = new Date(s);
+const diff = Date.now() - d.getTime();
+const mins = Math.floor(diff / 60000);
+if (mins < 1)  return 'just now';
+if (mins < 60) return `${mins}m ago`;
+const hrs = Math.floor(mins/60);
+if (hrs < 24)  return `${hrs}h ago`;
+const days = Math.floor(hrs/24);
+if (days < 7)  return `${days}d ago`;
+return fmtDate(s);
+}
+function renderUserName() {
+const saved = localStorage.getItem('user_name');
+const display = saved || window.userEmail || 'unknown';
+const el = document.getElementById('nameContainer');
+el.innerHTML = `
+    <span id="userName" class="gmail-email">${esc(display)}</span>
+  `;
+}
+function enableNameEdit() {
+const container = document.getElementById('nameContainer');
+const current = localStorage.getItem('user_name') || window.userEmail || '';
+container.innerHTML = `
+    <input id="nameInput" type="text" value="${esc(current)}" />
+  `;
+const input = document.getElementById('nameInput');
+input.focus();
+input.select();
+const save = () => {
+const val = input.value.trim();
+if (!val || val === window.userEmail) {
+localStorage.removeItem('user_name');
+    } else {
+localStorage.setItem('user_name', val);
+    }
+renderUserName();
+  };
+input.addEventListener('keydown', (e) => {
+if (e.key === 'Enter') save();
+if (e.key === 'Escape') renderUserName();
+  });
+input.addEventListener('blur', save);
+}
+document.addEventListener('click', (e) => {
+if (e.target && e.target.id === 'userName') {
+enableNameEdit();
+  }
+});
+// ═══════════════════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════════════════
+loadJobs();
+loadGmailUser();
+document.getElementById('sort-applied_date').textContent = ' ↓';
+</script>
+</body>
+</html>
